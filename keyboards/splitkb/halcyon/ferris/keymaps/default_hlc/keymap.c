@@ -90,7 +90,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      */
     [_DEFAULT] = LAYOUT_ferris_hlc(
         LT(3,KC_Q) , KC_W        , LALT_T(KC_F) , KC_P         , KC_G         , KC_J         , KC_L        , KC_U         , KC_Y         , KC_SCLN      ,
-        LT(1,KC_A) , LSFT_T(KC_R), LGUI_T(KC_S) , LCTL_T(KC_T) , KC_D         , KC_H         , LCTL_T(KC_N), LGUI_T(KC_E) , LSFT_T(KC_I) , LT(1,KC_O)   ,
+        LT(1,KC_A) , LSFT_T(KC_R), LGUI_T(KC_S) , LCTL_T(KC_T) , ESC_T(KC_D)         , KC_H         , LCTL_T(KC_N), LGUI_T(KC_E) , LSFT_T(KC_I) , LT(1,KC_O)   ,
         LT(2,KC_Z) , KC_X        , KC_C         , KC_V         , KC_B         , KC_K         , KC_M        , KC_COMM      , KC_DOT       , LT(2,KC_SLSH),
                                                     KC_SPC       , KC_BSPC      , LT(4,KC_TAB) , KC_ENT      ,
         KC_MUTE     , KC_NO       , KC_NO        , KC_NO        , KC_NO        , KC_MUTE      , KC_NO       , KC_NO        , KC_NO        , KC_NO
