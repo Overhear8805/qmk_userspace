@@ -3,6 +3,8 @@
 
 #pragma once
 
+#define ENCODER_RESOLUTION 2
+
 // Use macOS Unicode input method (requires "Unicode Hex Input" in
 // System Settings > Keyboard > Input Sources)
 #define UNICODE_SELECTED_MODES UNICODE_MODE_MACOS

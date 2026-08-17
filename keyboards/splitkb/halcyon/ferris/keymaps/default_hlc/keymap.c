@@ -29,8 +29,19 @@ enum custom_keycodes {
     SV_OE,
 };
 
+// Tap for D, hold for Escape. Layer 0 is the base layer, so the hold never
+// actually switches layers -- it only borrows QMK's tap-hold engine so the
+// timing matches the surrounding home-row mods.
+#define D_ESC LT(0, KC_D)
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+        case D_ESC:
+            if (!record->tap.count && record->event.pressed) {
+                tap_code16(KC_ESC);
+                return false;
+            }
+            return true;
         case SV_AO:
             if (record->event.pressed) {
                 if (get_mods() & MOD_MASK_SHIFT) {
@@ -70,6 +81,9 @@ enum layers {
     _MOUSE,
 };
 
+// The Halcyon module buttons are not part of this layout any more.
+// They live in halcyon_keys.c as left_halcyon_buttons / right_halcyon_buttons.
+
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /*
@@ -78,22 +92,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * ,-----------------------------------.  ,-----------------------------------.
      * | Q/Tri|   W  | F/Alt|   P  |   G   |  |   J  |   L  |   U  |   Y  |  ; : |
      * |------+------+------+------+-------|  |------+------+------+------+-------|
-     * | A/Sym| R/Sft| S/Gui| T/Ctl|   D   |  |   H  | N/Ctl| E/Gui| I/Sft| O/Sym|
+     * | A/Sym| R/Sft| S/Gui| T/Ctl| D/Esc |  |   H  | N/Ctl| E/Gui| I/Sft| O/Sym|
      * |------+------+------+------+-------|  |------+------+------+------+-------|
      * | Z/Num|   X  |   C  |   V  |   B   |  |   K  |   M  |  , < |  . > | / /Nm|
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      | Space| Bksp |  |Tb/Mse| Enter|
      *                      `-------------'  `-------------'
-     * ,-----------------------------------.  ,-----------------------------------.
-     * | MUTE |      |      |      |       |  | MUTE |      |      |      |      |
-     * `-----------------------------------'  `-----------------------------------'
      */
-    [_DEFAULT] = LAYOUT_ferris_hlc(
+    [_DEFAULT] = LAYOUT(
         LT(3,KC_Q) , KC_W        , LALT_T(KC_F) , KC_P         , KC_G         , KC_J         , KC_L        , KC_U         , KC_Y         , KC_SCLN      ,
-        LT(1,KC_A) , LSFT_T(KC_R), LGUI_T(KC_S) , LCTL_T(KC_T) , ESC_T(KC_D)         , KC_H         , LCTL_T(KC_N), LGUI_T(KC_E) , LSFT_T(KC_I) , LT(1,KC_O)   ,
+        LT(1,KC_A) , LSFT_T(KC_R), LGUI_T(KC_S) , LCTL_T(KC_T) , D_ESC        , KC_H         , LCTL_T(KC_N), LGUI_T(KC_E) , LSFT_T(KC_I) , LT(1,KC_O)   ,
         LT(2,KC_Z) , KC_X        , KC_C         , KC_V         , KC_B         , KC_K         , KC_M        , KC_COMM      , KC_DOT       , LT(2,KC_SLSH),
-                                                    KC_SPC       , KC_BSPC      , LT(4,KC_TAB) , KC_ENT      ,
-        KC_MUTE     , KC_NO       , KC_NO        , KC_NO        , KC_NO        , KC_MUTE      , KC_NO       , KC_NO        , KC_NO        , KC_NO
+                                                  KC_SPC       , KC_BSPC      , LT(4,KC_TAB) , KC_ENT
     ),
 
     /*
@@ -108,16 +118,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      |      |  Del  |  |G+Spc |CpWrd |
      *                      `-------------'  `-------------'
-     * ,-----------------------------------.  ,-----------------------------------.
-     * |      |      |      |      |       |  |      |      |      |      |      |
-     * `-----------------------------------'  `-----------------------------------'
      */
-    [_SYMBOL] = LAYOUT_ferris_hlc(
+    [_SYMBOL] = LAYOUT(
         KC_TAB  , KC_PLUS , KC_LBRC , KC_RBRC , KC_PIPE ,    KC_DOWN     , KC_RGHT , KC_EXLM , KC_DQUO , KC_QUOT ,
         KC_TRNS , KC_TILD , KC_LPRN , KC_RPRN , KC_GRV  ,    KC_LEFT     , SV_AO   , SV_AE   , SV_OE   , KC_TRNS ,
         KC_TRNS , KC_BSLS , KC_LBRC , KC_RBRC , KC_BSLS ,    KC_UP       , KC_UNDS , KC_MINS , KC_EQL  , KC_QUES ,
-                                       KC_TRNS , KC_DEL  ,    LGUI(KC_SPC), CW_TOGG ,
-        _______ , _______ , _______ , _______ , _______ ,    _______     , _______ , _______ , _______ , _______
+                                      KC_TRNS , KC_DEL  ,    LGUI(KC_SPC), CW_TOGG
     ),
 
     /*
@@ -132,16 +138,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      | G+Z  | G+Spc|  | G+Tab|   0  |
      *                      `-------------'  `-------------'
-     * ,-----------------------------------.  ,-----------------------------------.
-     * |      |      |      |      |       |  |      |      |      |      |      |
-     * `-----------------------------------'  `-----------------------------------'
      */
-    [_NUMBER] = LAYOUT_ferris_hlc(
-        KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS ,    KC_7         , KC_8    , KC_9    , KC_HOME , KC_END  ,
-        KC_TRNS , KC_LSFT , KC_LGUI , KC_LCTL , KC_TRNS ,    KC_4         , KC_5    , KC_6    , KC_TRNS , KC_TRNS ,
-        KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS ,    KC_1         , KC_2    , KC_3    , KC_TRNS , KC_TRNS ,
-                                       LGUI(KC_Z), LGUI(KC_SPC), LGUI(KC_TAB), KC_0  ,
-        _______ , _______ , _______ , _______ , _______ ,    _______      , _______ , _______ , _______ , _______
+    [_NUMBER] = LAYOUT(
+        KC_TRNS , KC_TRNS , KC_TRNS   , KC_TRNS     , KC_TRNS ,    KC_7        , KC_8    , KC_9    , KC_HOME , KC_END  ,
+        KC_TRNS , KC_LSFT , KC_LGUI   , KC_LCTL     , KC_TRNS ,    KC_4        , KC_5    , KC_6    , KC_TRNS , KC_TRNS ,
+        KC_TRNS , KC_TRNS , KC_TRNS   , KC_TRNS     , KC_TRNS ,    KC_1        , KC_2    , KC_3    , KC_TRNS , KC_TRNS ,
+                                        LGUI(KC_Z)  , LGUI(KC_SPC), LGUI(KC_TAB), KC_0
     ),
 
     /*
@@ -156,16 +158,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      | Play | Next |  |      | G+0  |
      *                      `-------------'  `-------------'
-     * ,-----------------------------------.  ,-----------------------------------.
-     * |      |      |      |      |       |  |      |      |      |      |      |
-     * `-----------------------------------'  `-----------------------------------'
      */
-    [_TRI] = LAYOUT_ferris_hlc(
+    [_TRI] = LAYOUT(
         KC_TRNS , KC_NO   , KC_NO   , KC_TRNS , KC_NO   ,    LGUI(KC_7) , LGUI(KC_8), LGUI(KC_9), KC_TRNS , KC_TRNS ,
         KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS , KC_NO   ,    LGUI(KC_4) , LGUI(KC_5), LGUI(KC_6), KC_TRNS , KC_TRNS ,
         KC_TRNS , KC_TRNS , KC_TRNS , KC_NO   , KC_NO   ,    LGUI(KC_1) , LGUI(KC_2), LGUI(KC_3), KC_TRNS , KC_TRNS ,
-                                       KC_MPLY , KC_MNXT ,    KC_TRNS    , LGUI(KC_0),
-        _______ , _______ , _______ , _______ , _______ ,    _______    , _______   , _______   , _______ , _______
+                                      KC_MPLY , KC_MNXT ,    KC_TRNS    , LGUI(KC_0)
     ),
 
     /*
@@ -180,16 +178,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      |      |      |  |      |      |
      *                      `-------------'  `-------------'
-     * ,-----------------------------------.  ,-----------------------------------.
-     * |      |      |      |      |       |  |      |      |      |      |      |
-     * `-----------------------------------'  `-----------------------------------'
      */
-    [_MOUSE] = LAYOUT_ferris_hlc(
+    [_MOUSE] = LAYOUT(
         QK_BOOT , KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS ,    MS_DOWN , MS_RGHT , MS_WHLU , KC_TRNS , KC_TRNS ,
         KC_TRNS , KC_TRNS , MS_BTN2 , MS_BTN1 , KC_TRNS ,    MS_LEFT , KC_TRNS , MS_WHLD , KC_TRNS , KC_TRNS ,
         KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS ,    MS_UP   , KC_TRNS , KC_TRNS , KC_TRNS , KC_TRNS ,
-                                       KC_TRNS , KC_TRNS ,    KC_TRNS , KC_TRNS ,
-        _______ , _______ , _______ , _______ , _______ ,    _______ , _______ , _______ , _______ , _______
+                                      KC_TRNS , KC_TRNS ,    KC_TRNS , KC_TRNS
     ),
 };
 // clang-format on
