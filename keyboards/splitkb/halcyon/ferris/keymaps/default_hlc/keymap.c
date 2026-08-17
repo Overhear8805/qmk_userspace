@@ -29,19 +29,45 @@ enum custom_keycodes {
     SV_OE,
 };
 
-// Tap for D, hold for Escape. Layer 0 is the base layer, so the hold never
-// actually switches layers -- it only borrows QMK's tap-hold engine so the
-// timing matches the surrounding home-row mods.
-#define D_ESC LT(0, KC_D)
+// Tap for the printed key, hold for the alternate. Layer 0 is the base layer, so
+// the hold never actually switches layer -- it only borrows QMK's tap-hold engine
+// so the timing matches the surrounding home-row mods.
+#define TH(kc) LT(0, (kc))
+
+static uint16_t tap_hold_alt(uint16_t keycode) {
+    switch (keycode) {
+        // Both index fingers double as Escape.
+        case TH(KC_D):
+        case TH(KC_H):    return KC_ESC;
+        case TH(KC_SCLN): return KC_COLN;
+        // Symbol layer
+        case TH(KC_MINS): return KC_LABK; // <
+        case TH(KC_EQL):  return KC_RABK; // >
+        // Number layer
+        case TH(KC_1):    return KC_EXLM;
+        case TH(KC_2):    return KC_AT;
+        case TH(KC_3):    return KC_HASH;
+        case TH(KC_4):    return KC_DLR;
+        case TH(KC_5):    return KC_PERC;
+        case TH(KC_6):    return KC_CIRC;
+        case TH(KC_7):    return KC_AMPR;
+        case TH(KC_8):    return KC_ASTR;
+        case TH(KC_9):    return KC_BSLS; // not "(" -- matches cradio.keymap
+        default:          return KC_NO;
+    }
+}
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    uint16_t hold_kc = tap_hold_alt(keycode);
+    if (hold_kc != KC_NO) {
+        if (!record->tap.count && record->event.pressed) {
+            tap_code16(hold_kc);
+            return false;
+        }
+        return true;
+    }
+
     switch (keycode) {
-        case D_ESC:
-            if (!record->tap.count && record->event.pressed) {
-                tap_code16(KC_ESC);
-                return false;
-            }
-            return true;
         case SV_AO:
             if (record->event.pressed) {
                 if (get_mods() & MOD_MASK_SHIFT) {
@@ -81,6 +107,12 @@ enum layers {
     _MOUSE,
 };
 
+// ZMK conditional_layers: if-layers <1 2> then-layer <3>. Holding A and Z together
+// reaches the Tri layer, the same way hold-Q does.
+layer_state_t layer_state_set_user(layer_state_t state) {
+    return update_tri_layer_state(state, _SYMBOL, _NUMBER, _TRI);
+}
+
 // The Halcyon module buttons are not part of this layout any more.
 // They live in halcyon_keys.c as left_halcyon_buttons / right_halcyon_buttons.
 
@@ -90,9 +122,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      * Default Layer: Colemak-DH
      *
      * ,-----------------------------------.  ,-----------------------------------.
-     * | Q/Tri|   W  | F/Alt|   P  |   G   |  |   J  |   L  |   U  |   Y  |  ; : |
+     * | Q/Tri|   W  | F/Alt|   P  |   G   |  |   J  |   L  |   U  |   Y  | ; / :|
      * |------+------+------+------+-------|  |------+------+------+------+-------|
-     * | A/Sym| R/Sft| S/Gui| T/Ctl| D/Esc |  |   H  | N/Ctl| E/Gui| I/Sft| O/Sym|
+     * | A/Sym| R/Sft| S/Gui| T/Ctl| D/Esc |  | H/Esc| N/Ctl| E/Gui| I/Sft| O/Sym|
      * |------+------+------+------+-------|  |------+------+------+------+-------|
      * | Z/Num|   X  |   C  |   V  |   B   |  |   K  |   M  |  , < |  . > | / /Nm|
      * `------+------+------+------+-------'  `------+------+------+------+------'
@@ -100,54 +132,54 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      *                      `-------------'  `-------------'
      */
     [_DEFAULT] = LAYOUT(
-        LT(3,KC_Q) , KC_W        , LALT_T(KC_F) , KC_P         , KC_G         , KC_J         , KC_L        , KC_U         , KC_Y         , KC_SCLN      ,
-        LT(1,KC_A) , LSFT_T(KC_R), LGUI_T(KC_S) , LCTL_T(KC_T) , D_ESC        , KC_H         , LCTL_T(KC_N), LGUI_T(KC_E) , LSFT_T(KC_I) , LT(1,KC_O)   ,
-        LT(2,KC_Z) , KC_X        , KC_C         , KC_V         , KC_B         , KC_K         , KC_M        , KC_COMM      , KC_DOT       , LT(2,KC_SLSH),
-                                                  KC_SPC       , KC_BSPC      , LT(4,KC_TAB) , KC_ENT
+        LT(3,KC_Q) , KC_W        , LALT_T(KC_F), KC_P        , KC_G        , KC_J        , KC_L        , KC_U        , KC_Y        , TH(KC_SCLN)  ,
+        LT(1,KC_A) , LSFT_T(KC_R), LGUI_T(KC_S), LCTL_T(KC_T), TH(KC_D)    , TH(KC_H)    , LCTL_T(KC_N), LGUI_T(KC_E), LSFT_T(KC_I), LT(1,KC_O)   ,
+        LT(2,KC_Z) , KC_X        , KC_C        , KC_V        , KC_B        , KC_K        , KC_M        , KC_COMM     , KC_DOT      , LT(2,KC_SLSH),
+                                                 KC_SPC      , KC_BSPC     , LT(4,KC_TAB), KC_ENT
     ),
 
     /*
      * Symbol Layer
      *
      * ,-----------------------------------.  ,-----------------------------------.
-     * |  Tab |   +  |   [  |   ]  |   |   |  | Down | Right|   !  |   "  |  ' " |
+     * |  Tab |   +  |   {  |   }  |   |   |  | Down | Right|   !  |   "  |  ' " |
      * |------+------+------+------+-------|  |------+------+------+------+-------|
      * |      |   ~  |   (  |   )  |   `   |  | Left |   å  |   ä  |   ö  |      |
      * |------+------+------+------+-------|  |------+------+------+------+-------|
-     * |      |   \  |   [  |   ]  |   \   |  |  Up  |   _  |   -  |   =  |   ?  |
+     * |      |   \  |   [  |   ]  |   \   |  |  Up  |   _  | - / <| = / >|   ?  |
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      |      |  Del  |  |G+Spc |CpWrd |
      *                      `-------------'  `-------------'
      */
     [_SYMBOL] = LAYOUT(
-        KC_TAB  , KC_PLUS , KC_LBRC , KC_RBRC , KC_PIPE ,    KC_DOWN     , KC_RGHT , KC_EXLM , KC_DQUO , KC_QUOT ,
-        KC_TRNS , KC_TILD , KC_LPRN , KC_RPRN , KC_GRV  ,    KC_LEFT     , SV_AO   , SV_AE   , SV_OE   , KC_TRNS ,
-        KC_TRNS , KC_BSLS , KC_LBRC , KC_RBRC , KC_BSLS ,    KC_UP       , KC_UNDS , KC_MINS , KC_EQL  , KC_QUES ,
-                                      KC_TRNS , KC_DEL  ,    LGUI(KC_SPC), CW_TOGG
+        KC_TAB  , KC_PLUS , KC_LCBR , KC_RCBR     , KC_PIPE ,    KC_DOWN     , KC_RGHT     , KC_EXLM     , KC_DQUO , KC_QUOT ,
+        KC_TRNS , KC_TILD , KC_LPRN , KC_RPRN     , KC_GRV  ,    KC_LEFT     , SV_AO       , SV_AE       , SV_OE   , KC_TRNS ,
+        KC_TRNS , KC_BSLS , KC_LBRC , KC_RBRC     , KC_BSLS ,    KC_UP       , KC_UNDS     , TH(KC_MINS) , TH(KC_EQL) , KC_QUES ,
+                                      KC_TRNS     , KC_DEL  ,    LGUI(KC_SPC), CW_TOGG
     ),
 
     /*
      * Number Layer
      *
      * ,-----------------------------------.  ,-----------------------------------.
-     * |      |      |      |      |       |  |   7  |   8  |   9  | Home |  End |
+     * |      |      |      |      |       |  | 7 / &| 8 / *| 9 / \| Home |  End |
      * |------+------+------+------+-------|  |------+------+------+------+-------|
-     * |      | Shift|  Gui |  Ctl |       |  |   4  |   5  |   6  |      |      |
+     * |      | Shift|Alt/Gu|  Ctl |       |  | 4 / $| 5 / %| 6 / ^|      |      |
      * |------+------+------+------+-------|  |------+------+------+------+-------|
-     * |      |      |      |      |       |  |   1  |   2  |   3  |      |      |
+     * |      |      |      |      |       |  | 1 / !| 2 / @| 3 / #|      |      |
      * `------+------+------+------+-------'  `------+------+------+------+------'
      *                      | G+Z  | G+Spc|  | G+Tab|   0  |
      *                      `-------------'  `-------------'
      */
     [_NUMBER] = LAYOUT(
-        KC_TRNS , KC_TRNS , KC_TRNS   , KC_TRNS     , KC_TRNS ,    KC_7        , KC_8    , KC_9    , KC_HOME , KC_END  ,
-        KC_TRNS , KC_LSFT , KC_LGUI   , KC_LCTL     , KC_TRNS ,    KC_4        , KC_5    , KC_6    , KC_TRNS , KC_TRNS ,
-        KC_TRNS , KC_TRNS , KC_TRNS   , KC_TRNS     , KC_TRNS ,    KC_1        , KC_2    , KC_3    , KC_TRNS , KC_TRNS ,
-                                        LGUI(KC_Z)  , LGUI(KC_SPC), LGUI(KC_TAB), KC_0
+        KC_TRNS , KC_TRNS , KC_TRNS          , KC_TRNS     , KC_TRNS ,    TH(KC_7)    , TH(KC_8) , TH(KC_9) , KC_HOME , KC_END  ,
+        KC_TRNS , KC_LSFT , LGUI_T(KC_LALT)  , KC_LCTL     , KC_TRNS ,    TH(KC_4)    , TH(KC_5) , TH(KC_6) , KC_TRNS , KC_TRNS ,
+        KC_TRNS , KC_TRNS , KC_TRNS          , KC_TRNS     , KC_TRNS ,    TH(KC_1)    , TH(KC_2) , TH(KC_3) , KC_TRNS , KC_TRNS ,
+                                               LGUI(KC_Z)  , LGUI(KC_SPC), LGUI(KC_TAB), KC_0
     ),
 
     /*
-     * Tri Layer (Q held)
+     * Tri Layer (Q held, or Sym + Num together)
      *
      * ,-----------------------------------.  ,-----------------------------------.
      * |      |      |      |      |       |  | G+7  | G+8  | G+9  |      |      |
