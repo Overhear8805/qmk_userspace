@@ -5,9 +5,10 @@
 
 #define ENCODER_RESOLUTION 2
 
-// Use macOS Unicode input method (requires "Unicode Hex Input" in
-// System Settings > Keyboard > Input Sources)
-#define UNICODE_SELECTED_MODES UNICODE_MODE_MACOS
+// Linux/ibus Unicode input: Ctrl+Shift+U, hex digits, confirm.
+// Matches HOST_OS 1 in zmk-config/config/cradio.keymap, which selects
+// OS_UNICODE_LEAD `&kp LS(LC(U))`.
+#define UNICODE_SELECTED_MODES UNICODE_MODE_LINUX
 
 // Solid yellow backlight
 #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_SOLID_COLOR
